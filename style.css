@@ -1,0 +1,1009 @@
+/* =================================
+   ベーススタイル
+   ================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* カラーパレット */
+    --gold: #FFD700;
+    --red: #FF2D55;
+    --purple: #7B68EE;
+    --blue: #00BFFF;
+    --green: #00FF7F;
+    --pink: #FF1493;
+    
+    /* 背景色 */
+    --bg-dark: #0a0a0a;
+    --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    
+    /* テキスト */
+    --text-white: #FFFFFF;
+    --text-gold: #FFD700;
+    --text-silver: #C0C0C0;
+}
+
+body {
+    font-family: 'Orbitron', 'Noto Sans JP', monospace;
+    background: var(--bg-dark);
+    color: var(--text-white);
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+}
+
+/* =================================
+   背景アニメーション
+   ================================= */
+.background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: var(--bg-gradient);
+}
+
+.floating-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.floating-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: float 8s infinite linear;
+    box-shadow: 0 0 6px var(--gold);
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.6; }
+    100% {
+        transform: translateY(-50px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.neon-grid {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 191, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 191, 255, 0.1) 1px, transparent 1px);
+    background-size: 30px 30px;
+    animation: gridMove 15s infinite linear;
+}
+
+@keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(30px, 30px); }
+}
+
+/* =================================
+   メインコンテナ
+   ================================= */
+.container {
+    max-width: 100%;
+    width: 100%;
+    padding: 10px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
+
+/* =================================
+   ヘッダー
+   ================================= */
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 20px 10px;
+    animation: slideDown 1s ease-out;
+}
+
+.title {
+    font-size: clamp(1.8em, 8vw, 3.2em);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 
+        0 0 10px var(--gold),
+        0 0 20px var(--gold),
+        0 0 30px var(--gold);
+    margin-bottom: 5px;
+    animation: glow 3s ease-in-out infinite alternate;
+}
+
+.subtitle {
+    font-size: clamp(0.8em, 3vw, 1.2em);
+    color: var(--blue);
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px var(--blue);
+}
+
+@keyframes glow {
+    0% {
+        text-shadow: 
+            0 0 10px var(--gold),
+            0 0 20px var(--gold),
+            0 0 30px var(--gold);
+    }
+    100% {
+        text-shadow: 
+            0 0 15px var(--gold),
+            0 0 25px var(--gold),
+            0 0 35px var(--gold),
+            0 0 45px var(--gold);
+    }
+}
+
+/* =================================
+   ゲームエリア
+   ================================= */
+.game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    padding: 0 10px;
+}
+
+.slot-machine {
+    background: rgba(20, 20, 40, 0.95);
+    border: 3px solid var(--gold);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.4),
+        inset 0 0 30px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(15px);
+    animation: slideUp 1s ease-out;
+    width: 100%;
+    max-width: 400px;
+}
+
+.neon-frame {
+    position: relative;
+    border: 2px solid var(--blue);
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.8);
+    box-shadow: 
+        0 0 20px var(--blue),
+        inset 0 0 20px rgba(0, 191, 255, 0.1);
+    overflow: hidden;
+}
+
+/* =================================
+   スロット表示
+   ================================= */
+.slot-display {
+    position: relative;
+    height: 200px;
+    background: linear-gradient(180deg, #000 0%, #111 50%, #000 100%);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.dice-reel {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dice-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    perspective: 1000px;
+}
+
+.dice-face {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #fff, #f0f0f0);
+    border: 3px solid #333;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+    transform-style: preserve-3d;
+}
+
+.dice-number {
+    font-size: 3.5em;
+    font-weight: 900;
+    color: #333;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+/* スピン中のアニメーション */
+.dice-face.spinning {
+    animation: diceRoll 0.1s linear infinite;
+}
+
+@keyframes diceRoll {
+    0% { transform: rotateX(0deg) rotateY(0deg); }
+    25% { transform: rotateX(90deg) rotateY(90deg); }
+    50% { transform: rotateX(180deg) rotateY(180deg); }
+    75% { transform: rotateX(270deg) rotateY(270deg); }
+    100% { transform: rotateX(360deg) rotateY(360deg); }
+}
+
+/* 各数字のスタイル */
+.dice-face.result-1 { background: linear-gradient(45deg, #ff6b6b, #ee5a52); }
+.dice-face.result-2 { background: linear-gradient(45deg, #4ecdc4, #44a08d); }
+.dice-face.result-3 { background: linear-gradient(45deg, #45b7d1, #3498db); }
+.dice-face.result-4 { background: linear-gradient(45deg, #96ceb4, #85c1a3); }
+.dice-face.result-5 { background: linear-gradient(45deg, #feca57, #ff9ff3); }
+.dice-face.result-6 { 
+    background: linear-gradient(45deg, #ff7675, #fd79a8);
+    animation: jackpotGlow 1s ease-in-out infinite alternate !important;
+}
+
+@keyframes jackpotGlow {
+    0% {
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px var(--gold);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: 0 15px 40px rgba(0,0,0,0.7), 0 0 40px var(--gold);
+        transform: scale(1.05);
+    }
+}
+
+/* サイドエフェクト */
+.side-effects {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+.light-beam {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--blue), var(--pink), var(--green));
+    animation: lightPulse 2s ease-in-out infinite;
+}
+
+.light-beam.left { left: 10px; }
+.light-beam.right { right: 10px; }
+
+@keyframes lightPulse {
+    0%, 100% { opacity: 0.3; box-shadow: 0 0 5px currentColor; }
+    50% { opacity: 1; box-shadow: 0 0 15px currentColor; }
+}
+
+/* 結果ウィンドウ */
+.result-window {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140px;
+    height: 140px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.result-glow {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.result-glow.active {
+    opacity: 1;
+    animation: resultGlow 2s ease-in-out infinite;
+}
+
+@keyframes resultGlow {
+    0% { box-shadow: 0 0 10px var(--gold); }
+    50% { box-shadow: 0 0 30px var(--gold), 0 0 50px var(--gold); }
+    100% { box-shadow: 0 0 10px var(--gold); }
+}
+
+/* =================================
+   メッセージエリア
+   ================================= */
+.message-area {
+    text-align: center;
+    margin-top: 15px;
+    min-height: 60px;
+}
+
+.result-message {
+    font-size: clamp(1.2em, 4vw, 1.6em);
+    font-weight: 700;
+    color: var(--gold);
+    text-shadow: 0 0 10px var(--gold);
+    margin-bottom: 5px;
+    opacity: 1;
+    transition: all 0.5s ease;
+}
+
+.result-message.hide {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.payout-display {
+    font-size: clamp(1em, 3vw, 1.2em);
+    color: var(--green);
+    text-shadow: 0 0 8px var(--green);
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+.payout-display.show {
+    opacity: 1;
+    animation: payoutBounce 0.8s ease-out;
+}
+
+@keyframes payoutBounce {
+    0% { transform: translateY(20px) scale(0.8); opacity: 0; }
+    50% { transform: translateY(-5px) scale(1.1); }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* =================================
+   スピンコントロール
+   ================================= */
+.spin-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.spin-btn {
+    position: relative;
+    background: linear-gradient(45deg, var(--red), var(--purple));
+    border: 3px solid var(--gold);
+    border-radius: 50%;
+    width: clamp(140px, 35vw, 180px);
+    height: clamp(140px, 35vw, 180px);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 0 30px rgba(220, 20, 60, 0.5),
+        0 8px 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.spin-btn:active {
+    transform: scale(0.95);
+}
+
+.spin-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: white;
+}
+
+.btn-text {
+    font-size: clamp(1.8em, 6vw, 2.5em);
+    font-weight: 900;
+    text-shadow: 0 0 10px currentColor;
+    margin-bottom: 5px;
+}
+
+.btn-icon {
+    font-size: clamp(1.2em, 4vw, 1.5em);
+    opacity: 0.8;
+}
+
+.btn-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+    animation: btnGlow 3s ease-in-out infinite;
+    opacity: 0;
+}
+
+.spin-btn:not(:disabled):hover .btn-glow {
+    animation-duration: 1s;
+}
+
+@keyframes btnGlow {
+    0%, 100% { opacity: 0; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* スピンプログレス */
+.spin-progress {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.spin-progress.active {
+    opacity: 1;
+}
+
+.progress-ring {
+    width: 100%;
+    height: 100%;
+    border: 3px solid rgba(255, 215, 0, 0.3);
+    border-radius: 50%;
+    position: relative;
+}
+
+.progress-fill {
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 100%;
+    height: 100%;
+    border: 3px solid transparent;
+    border-top: 3px solid var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--gold);
+    text-align: center;
+}
+
+/* =================================
+   統計パネル
+   ================================= */
+.stats-panel {
+    background: rgba(20, 20, 40, 0.95);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+    animation: slideUp 1s ease-out 0.3s both;
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.stats-title {
+    font-size: clamp(1.1em, 4vw, 1.4em);
+    color: var(--gold);
+    font-weight: 700;
+}
+
+.reset-btn {
+    background: linear-gradient(45deg, #666, #999);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.reset-btn:active {
+    transform: scale(0.95);
+}
+
+.stats-summary {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8em;
+    color: var(--text-silver);
+    margin-bottom: 3px;
+}
+
+.stat-value {
+    font-size: 1.5em;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 8px var(--gold);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.stat-box {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+}
+
+.stat-number {
+    font-size: 2em;
+    font-weight: 900;
+    color: var(--gold);
+    margin-bottom: 3px;
+}
+
+.stat-count {
+    font-size: 0.9em;
+    color: var(--text-silver);
+}
+
+/* =================================
+   設定パネル
+   ================================= */
+.settings-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+}
+
+.settings-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.2);
+    border: 2px solid var(--gold);
+    color: var(--gold);
+    cursor: pointer;
+    font-size: 1.5em;
+    transition: all 0.3s ease;
+}
+
+.settings-btn:active {
+    transform: scale(0.9);
+}
+
+.settings-content {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    background: rgba(20, 20, 40, 0.95);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.settings-content.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.setting-item {
+    margin-bottom: 15px;
+}
+
+.setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.setting-label {
+    display: block;
+    color: var(--text-silver);
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.volume-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    outline: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.mute-btn {
+    width: 100%;
+    background: linear-gradient(45deg, var(--purple), var(--blue));
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.mute-btn:active {
+    transform: scale(0.95);
+}
+
+.mute-btn.muted {
+    background: linear-gradient(45deg, #666, #999);
+}
+
+/* =================================
+   エフェクトレイヤー
+   ================================= */
+.effects-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.particles-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    box-shadow: 0 0 8px currentColor;
+}
+
+.flash-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0);
+    transition: background 0.2s ease;
+}
+
+.flash-effect.active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.jackpot-popup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s ease;
+}
+
+.jackpot-popup.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.jackpot-content {
+    text-align: center;
+    animation: jackpotAppear 1s ease-out;
+}
+
+.jackpot-title {
+    font-size: clamp(2.5em, 10vw, 5em);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 
+        0 0 20px var(--gold),
+        0 0 40px var(--gold);
+    margin-bottom: 10px;
+    animation: jackpotPulse 1s ease-in-out infinite alternate;
+}
+
+.jackpot-subtitle {
+    font-size: clamp(1em, 4vw, 1.5em);
+    color: var(--green);
+    text-shadow: 0 0 15px var(--green);
+}
+
+@keyframes jackpotAppear {
+    0% {
+        transform: scale(0.5) rotate(-10deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(5deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes jackpotPulse {
+    0% {
+        text-shadow: 
+            0 0 20px var(--gold),
+            0 0 40px var(--gold);
+        transform: scale(1);
+    }
+    100% {
+        text-shadow: 
+            0 0 30px var(--gold),
+            0 0 60px var(--gold),
+            0 0 90px var(--gold);
+        transform: scale(1.05);
+    }
+}
+
+/* =================================
+   アニメーション
+   ================================= */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =================================
+   レスポンシブ（スマホ最適化）
+   ================================= */
+@media (max-width: 480px) {
+    .container {
+        padding: 5px;
+    }
+    
+    .header {
+        margin-bottom: 15px;
+        padding: 15px 5px;
+    }
+    
+    .slot-machine {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .slot-display {
+        height: 160px;
+    }
+    
+    .dice-container {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .dice-number {
+        font-size: 3em;
+    }
+    
+    .result-window {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .message-area {
+        min-height: 50px;
+    }
+    
+    .spin-control {
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .stats-panel {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .settings-panel {
+        top: 10px;
+        right: 10px;
+    }
+    
+    .settings-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3em;
+    }
+    
+    .settings-content {
+        min-width: 180px;
+    }
+}
+
+/* タッチデバイス用 */
+@media (hover: none) and (pointer: coarse) {
+    .spin-btn:hover .btn-glow {
+        animation-duration: 3s;
+    }
+    
+    .stat-box:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* タッチフィードバック強化 */
+    .spin-btn:active {
+        transform: scale(0.9);
+        transition: transform 0.1s ease;
+    }
+    
+    .settings-btn:active,
+    .reset-btn:active,
+    .mute-btn:active {
+        transform: scale(0.9);
+        transition: transform 0.1s ease;
+    }
+}
+
+/* 音声初期化ボタン */
+.init-audio-btn {
+    width: 100%;
+    background: linear-gradient(45deg, var(--green), var(--blue));
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.init-audio-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 255, 127, 0.4);
+}
+
+.init-audio-btn:active {
+    transform: scale(0.95);
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        box-shadow: 0 0 5px var(--green);
+    }
+    50% { 
+        box-shadow: 0 0 20px var(--green), 0 0 30px var(--green);
+    }
+}
+
+/* 音声無効時の警告表示 */
+.audio-warning {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 193, 7, 0.9);
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 700;
+    z-index: 1001;
+    animation: slideDownWarning 0.5s ease-out;
+}
+
+@keyframes slideDownWarning {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* 既存のCSSはそのまま維持 */

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サイコロルーレット</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 音声要素を追加 -->
+    <div style="display: none;">
+        <audio id="audio-jackpot" preload="auto">
+            <source src="sounds/jackpot.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="audio-click" preload="auto">
+            <source src="sounds/click.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="audio-result-big" preload="auto">
+            <source src="sounds/result-big.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="audio-result-normal" preload="auto">
+            <source src="sounds/result-normal.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="audio-spin-start" preload="auto">
+            <source src="sounds/spin-start.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="audio-spinning" preload="auto" loop>
+            <source src="sounds/spinning.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- 背景アニメーション -->
+    <div class="background">
+        <div class="floating-particles"></div>
+        <div class="neon-grid"></div>
+    </div>
+
+    <!-- メインコンテナ -->
+    <div class="container">
+        <!-- ヘッダー -->
+        <header class="header">
+            <h1 class="title">
+                🎰 サイコロルーレット 🎰
+            </h1>
+            <p class="subtitle">PREMIUM DICE EXPERIENCE</p>
+        </header>
+
+        <!-- ゲームエリア -->
+        <main class="game-area">
+            <!-- スロットマシン -->
+            <div class="slot-machine">
+                <!-- ネオンフレーム -->
+                <div class="neon-frame">
+                    <!-- スロット表示 -->
+                    <div class="slot-display">
+                        <!-- 回転するサイコロ表示エリア -->
+                        <div class="dice-reel">
+                            <div class="dice-container" id="diceContainer">
+                                <div class="dice-face" id="diceFace">
+                                    <span class="dice-number" id="diceNumber">?</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- サイドエフェクト -->
+                        <div class="side-effects">
+                            <div class="light-beam left"></div>
+                            <div class="light-beam right"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 結果ウィンドウ -->
+                    <div class="result-window">
+                        <div class="result-glow" id="resultGlow"></div>
+                    </div>
+                </div>
+                
+                <!-- メッセージエリア -->
+                <div class="message-area">
+                    <div class="result-message" id="resultMessage">タップしてスタート！</div>
+                    <div class="payout-display" id="payoutDisplay"></div>
+                </div>
+            </div>
+
+            <!-- スピンボタン -->
+            <div class="spin-control">
+                <button class="spin-btn" id="spinBtn">
+                    <div class="btn-content">
+                        <span class="btn-text">SPIN</span>
+                        <span class="btn-icon">🎲</span>
+                    </div>
+                    <div class="btn-glow"></div>
+                </button>
+                
+                <!-- スピン進行表示 -->
+                <div class="spin-progress" id="spinProgress">
+                    <div class="progress-ring">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text">SPINNING...</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 統計パネル -->
+        <section class="stats-panel">
+            <div class="stats-header">
+                <h2 class="stats-title">📊 STATISTICS</h2>
+                <button class="reset-btn" id="resetBtn">🔄 RESET</button>
+            </div>
+            
+            <div class="stats-content">
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <span class="stat-label">TOTAL</span>
+                        <span class="stat-value" id="totalSpins">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">JACKPOTS</span>
+                        <span class="stat-value" id="jackpotCount">0</span>
+                    </div>
+                </div>
+                
+                <div class="stats-grid" id="statsGrid">
+                    <!-- JavaScriptで動的生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 設定パネル -->
+        <div class="settings-panel">
+            <button class="settings-btn" id="settingsBtn">⚙️</button>
+            <div class="settings-content" id="settingsContent">
+                <div class="setting-item">
+                    <label class="setting-label">🔊 音量</label>
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                </div>
+                <div class="setting-item">
+                    <button class="mute-btn" id="muteBtn">🔊 ON</button>
+                </div>
+                <!-- 音声初期化ボタン（初回のみ表示） -->
+                <div class="setting-item" id="audioInitPanel" style="display: block;">
+                    <button class="init-audio-btn" id="initAudioBtn">🎵 音声を有効化</button>
+                    <p style="font-size: 0.8em; color: var(--text-silver); margin-top: 5px;">
+                        ※初回のみクリックして音声を有効化してください
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- エフェクトレイヤー -->
+    <div class="effects-overlay">
+        <div class="particles-container" id="particlesContainer"></div>
+        <div class="flash-effect" id="flashEffect"></div>
+        <div class="jackpot-popup" id="jackpotPopup">
+            <div class="jackpot-content">
+                <h1 class="jackpot-title">🎊 JACKPOT! 🎊</h1>
+                <p class="jackpot-subtitle">AMAZING LUCK!</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
