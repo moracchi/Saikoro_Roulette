@@ -2,32 +2,59 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>サイコロルーレット</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- iOS Safari最適化 -->
+    <style>
+        /* iOS Safari特有の問題対策 */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            -webkit-overflow-scrolling: touch;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        
+        button {
+            -webkit-appearance: none;
+            appearance: none;
+            border: none;
+            outline: none;
+        }
+    </style>
 </head>
 <body>
-    <!-- 音声要素を追加 -->
-    <div style="display: none;">
-        <audio id="audio-jackpot" preload="auto">
+    <!-- 音声要素（iOS Safari対応） -->
+    <div style="display: none; position: absolute; top: -9999px;">
+        <audio id="audio-jackpot" preload="metadata" playsinline>
             <source src="sounds/jackpot.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-click" preload="auto">
+        <audio id="audio-click" preload="metadata" playsinline>
             <source src="sounds/click.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-result-big" preload="auto">
+        <audio id="audio-result-big" preload="metadata" playsinline>
             <source src="sounds/result-big.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-result-normal" preload="auto">
+        <audio id="audio-result-normal" preload="metadata" playsinline>
             <source src="sounds/result-normal.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-spin-start" preload="auto">
+        <audio id="audio-spin-start" preload="metadata" playsinline>
             <source src="sounds/spin-start.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-spinning" preload="auto" loop>
+        <audio id="audio-spinning" preload="metadata" playsinline loop>
             <source src="sounds/spinning.mp3" type="audio/mpeg">
         </audio>
     </div>
@@ -36,6 +63,15 @@
     <div class="background">
         <div class="floating-particles"></div>
         <div class="neon-grid"></div>
+    </div>
+
+    <!-- iOS Safari初期化通知 -->
+    <div class="ios-init-notice" id="iosInitNotice">
+        <div class="notice-content">
+            <h3>🎰 ゲーム初期化</h3>
+            <p>タップして音声を有効化してください</p>
+            <button class="init-btn" id="iosInitBtn">タップして開始</button>
+        </div>
     </div>
 
     <!-- メインコンテナ -->
@@ -80,14 +116,14 @@
                 
                 <!-- メッセージエリア -->
                 <div class="message-area">
-                    <div class="result-message" id="resultMessage">タップしてスタート！</div>
+                    <div class="result-message" id="resultMessage">タップして開始してください</div>
                     <div class="payout-display" id="payoutDisplay"></div>
                 </div>
             </div>
 
-            <!-- スピンボタン -->
+            <!-- スピンボタン（iOS対応強化版） -->
             <div class="spin-control">
-                <button class="spin-btn" id="spinBtn">
+                <button class="spin-btn" id="spinBtn" type="button" role="button" aria-label="スピン開始">
                     <div class="btn-content">
                         <span class="btn-text">SPIN</span>
                         <span class="btn-icon">🎲</span>
@@ -109,7 +145,7 @@
         <section class="stats-panel">
             <div class="stats-header">
                 <h2 class="stats-title">📊 STATISTICS</h2>
-                <button class="reset-btn" id="resetBtn">🔄 RESET</button>
+                <button class="reset-btn" id="resetBtn" type="button">🔄 RESET</button>
             </div>
             
             <div class="stats-content">
@@ -132,21 +168,14 @@
 
         <!-- 設定パネル -->
         <div class="settings-panel">
-            <button class="settings-btn" id="settingsBtn">⚙️</button>
+            <button class="settings-btn" id="settingsBtn" type="button">⚙️</button>
             <div class="settings-content" id="settingsContent">
                 <div class="setting-item">
                     <label class="setting-label">🔊 音量</label>
                     <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
                 </div>
                 <div class="setting-item">
-                    <button class="mute-btn" id="muteBtn">🔊 ON</button>
-                </div>
-                <!-- 音声初期化ボタン（初回のみ表示） -->
-                <div class="setting-item" id="audioInitPanel" style="display: block;">
-                    <button class="init-audio-btn" id="initAudioBtn">🎵 音声を有効化</button>
-                    <p style="font-size: 0.8em; color: var(--text-silver); margin-top: 5px;">
-                        ※初回のみクリックして音声を有効化してください
-                    </p>
+                    <button class="mute-btn" id="muteBtn" type="button">🔊 ON</button>
                 </div>
             </div>
         </div>

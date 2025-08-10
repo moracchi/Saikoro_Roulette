@@ -1,11 +1,21 @@
 // =================================
+// iOS Safari対応の設定
+// =================================
+const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|OPiOS|mercury/.test(navigator.userAgent);
+const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+console.log('iOS Safari検出:', isIOSSafari);
+console.log('モバイルデバイス:', isMobileDevice);
+
+// =================================
 // グローバル変数とDOM要素
 // =================================
 let isSpinning = false;
 let spinHistory = JSON.parse(localStorage.getItem('spinHistory')) || [];
 let isMuted = localStorage.getItem('isMuted') === 'true';
 let volume = parseFloat(localStorage.getItem('volume')) || 0.7;
-let audioInitialized = localStorage.getItem('audioInitialized') === 'true';
+let audioInitialized = false;
+let gameInitialized = false;
 
 // スピン制御用の変数
 let spinAnimationInterval = null;
@@ -18,6 +28,7 @@ let audioContext = null;
 
 // DOM要素を取得
 const elements = {
+    // メイン要素
     spinBtn: null,
     diceContainer: null,
     diceFace: null,
@@ -26,41 +37,78 @@ const elements = {
     resultMessage: null,
     payoutDisplay: null,
     spinProgress: null,
-    progressFill: null,
+    
+    // 設定要素
     settingsBtn: null,
     settingsContent: null,
     muteBtn: null,
     volumeSlider: null,
     resetBtn: null,
+    
+    // 統計要素
     statsGrid: null,
     totalSpins: null,
     jackpotCount: null,
+    
+    // エフェクト要素
     particlesContainer: null,
     flashEffect: null,
     jackpotPopup: null,
     floatingParticles: null,
-    initAudioBtn: null,
-    audioInitPanel: null
+    
+    // iOS専用要素
+    iosInitNotice: null,
+    iosInitBtn: null
 };
 
 // =================================
-// 初期化
+// 初期化（iOS Safari対応版）
 // =================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM読み込み完了');
+    
+    // iOS Safari対応の初期化
+    initializeForIOSSafari();
+    
     initializeElements();
-    initializeAudioElements();
-    initializeGame();
     setupEventListeners();
     updateStatistics();
     startBackgroundAnimation();
     
-    // 音声初期化状態を確認
-    checkAudioInitialization();
+    // iOS Safariの場合は初期化通知を表示
+    if (isIOSSafari) {
+        showIOSInitNotice();
+    } else {
+        initializeGame();
+    }
 });
 
+// iOS Safari用の初期化
+function initializeForIOSSafari() {
+    if (isIOSSafari) {
+        // iOS Safariでのスクロール防止
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // ダブルタップズーム無効化
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        console.log('iOS Safari用の初期化完了');
+    }
+}
+
 function initializeElements() {
-    // DOM要素を安全に取得
+    // 全てのDOM要素を取得
     elements.spinBtn = document.getElementById('spinBtn');
     elements.diceContainer = document.getElementById('diceContainer');
     elements.diceFace = document.getElementById('diceFace');
@@ -69,7 +117,6 @@ function initializeElements() {
     elements.resultMessage = document.getElementById('resultMessage');
     elements.payoutDisplay = document.getElementById('payoutDisplay');
     elements.spinProgress = document.getElementById('spinProgress');
-    elements.progressFill = document.getElementById('progressFill');
     elements.settingsBtn = document.getElementById('settingsBtn');
     elements.settingsContent = document.getElementById('settingsContent');
     elements.muteBtn = document.getElementById('muteBtn');
@@ -82,179 +129,301 @@ function initializeElements() {
     elements.flashEffect = document.getElementById('flashEffect');
     elements.jackpotPopup = document.getElementById('jackpotPopup');
     elements.floatingParticles = document.querySelector('.floating-particles');
-    elements.initAudioBtn = document.getElementById('initAudioBtn');
-    elements.audioInitPanel = document.getElementById('audioInitPanel');
+    elements.iosInitNotice = document.getElementById('iosInitNotice');
+    elements.iosInitBtn = document.getElementById('iosInitBtn');
 
     console.log('DOM要素取得完了');
 }
 
+// iOS初期化通知の表示
+function showIOSInitNotice() {
+    if (elements.iosInitNotice) {
+        elements.iosInitNotice.classList.add('show');
+    }
+}
+
+function hideIOSInitNotice() {
+    if (elements.iosInitNotice) {
+        elements.iosInitNotice.classList.remove('show');
+    }
+}
+
 // =================================
-// 音声システム初期化（修正版）
+// イベントリスナー設定（iOS Safari対応版）
 // =================================
-function initializeAudioElements() {
-    // 音声要素を取得
-    const audioIds = ['jackpot', 'click', 'result-big', 'result-normal', 'spin-start', 'spinning'];
+function setupEventListeners() {
+    console.log('イベントリスナー設定開始');
     
-    audioIds.forEach(id => {
-        const element = document.getElementById(`audio-${id}`);
-        if (element) {
-            audioElements[id] = element;
-            
-            // 音量を設定
-            element.volume = volume;
-            
-            // 音声読み込み完了イベント
-            element.addEventListener('canplaythrough', () => {
-                console.log(`音声読み込み完了: ${id}`);
-            });
-            
-            // 音声エラーイベント
-            element.addEventListener('error', (e) => {
-                console.error(`音声エラー: ${id}`, e);
-            });
-            
-            // iOS対応：タッチ操作で音声を初期化
-            element.addEventListener('loadstart', () => {
-                console.log(`音声読み込み開始: ${id}`);
-            });
+    // iOS初期化ボタン
+    if (elements.iosInitBtn) {
+        // iOS Safariの場合、touchstartとclickの両方を監視
+        elements.iosInitBtn.addEventListener('touchstart', handleIOSInit, { passive: false });
+        elements.iosInitBtn.addEventListener('click', handleIOSInit);
+        console.log('iOS初期化ボタン設定完了');
+    }
+
+    // スピンボタン（iOS対応強化版）
+    if (elements.spinBtn) {
+        // iOS Safariではtouchstartを優先
+        if (isIOSSafari) {
+            elements.spinBtn.addEventListener('touchstart', handleSpinTouch, { passive: false });
+            elements.spinBtn.addEventListener('touchend', handleSpinTouchEnd, { passive: false });
         } else {
-            console.warn(`音声要素が見つかりません: audio-${id}`);
+            elements.spinBtn.addEventListener('click', handleSpin);
         }
-    });
+        console.log('スピンボタン設定完了');
+    }
+
+    // その他のボタン
+    setupOtherEventListeners();
     
-    console.log('音声要素初期化完了', audioElements);
+    console.log('全イベントリスナー設定完了');
 }
 
-// 音声初期化状態チェック
-function checkAudioInitialization() {
-    if (audioInitialized) {
-        hideAudioInitPanel();
-    } else {
-        showAudioInitPanel();
-    }
-}
-
-function showAudioInitPanel() {
-    if (elements.audioInitPanel) {
-        elements.audioInitPanel.style.display = 'block';
-    }
-}
-
-function hideAudioInitPanel() {
-    if (elements.audioInitPanel) {
-        elements.audioInitPanel.style.display = 'none';
-    }
-}
-
-// 音声初期化処理
-async function initializeAudio() {
+// iOS初期化処理
+async function handleIOSInit(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('iOS初期化開始');
+    
     try {
-        console.log('音声システム初期化開始');
+        // 音声システムの初期化
+        await initializeAudioSystem();
         
-        // AudioContext作成（ユーザーインタラクション後）
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        
-        if (audioContext.state === 'suspended') {
-            await audioContext.resume();
-        }
-        
-        // 各音声要素を準備
-        const promises = Object.values(audioElements).map(async (audio) => {
-            try {
-                // 音声を一瞬だけ再生して初期化（ミュート状態で）
-                const originalVolume = audio.volume;
-                audio.volume = 0;
-                audio.currentTime = 0;
-                
-                await audio.play();
-                audio.pause();
-                audio.currentTime = 0;
-                audio.volume = originalVolume;
-                
-                console.log('音声初期化成功:', audio.id);
-                return Promise.resolve();
-            } catch (error) {
-                console.warn('音声初期化エラー:', audio.id, error);
-                return Promise.resolve(); // エラーでも続行
-            }
-        });
-        
-        await Promise.all(promises);
+        // ゲームの初期化
+        await initializeGame();
         
         // 初期化完了
+        gameInitialized = true;
         audioInitialized = true;
-        localStorage.setItem('audioInitialized', 'true');
-        hideAudioInitPanel();
         
-        // 成功メッセージ表示
-        showAudioWarning('🎵 音声が有効化されました！', 'success');
+        // 通知を非表示
+        hideIOSInitNotice();
         
-        console.log('音声システム初期化完了');
+        // 成功メッセージ
+        if (elements.resultMessage) {
+            elements.resultMessage.textContent = 'ゲーム開始準備完了！';
+        }
+        
+        console.log('iOS初期化完了');
         
     } catch (error) {
-        console.error('音声初期化エラー:', error);
-        showAudioWarning('⚠️ 音声初期化に失敗しました', 'error');
+        console.error('iOS初期化エラー:', error);
+        if (elements.resultMessage) {
+            elements.resultMessage.textContent = '初期化エラーが発生しました';
+        }
     }
 }
 
-// 音声再生関数（修正版）
-async function playAudio(audioName, delay = 0) {
-    if (isMuted) {
-        console.log('音声ミュート中:', audioName);
+// iOS Safari用のタッチ処理
+function handleSpinTouch(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!gameInitialized) {
+        console.log('ゲーム未初期化');
         return;
     }
     
-    if (!audioInitialized) {
-        console.log('音声未初期化:', audioName);
+    // タッチフィードバック
+    if (elements.spinBtn) {
+        elements.spinBtn.style.transform = 'scale(0.95)';
+    }
+    
+    // バイブレーション
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+    
+    console.log('タッチ開始');
+}
+
+function handleSpinTouchEnd(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!gameInitialized) {
+        console.log('ゲーム未初期化');
+        return;
+    }
+    
+    // タッチフィードバック解除
+    if (elements.spinBtn) {
+        elements.spinBtn.style.transform = '';
+    }
+    
+    // スピン実行
+    setTimeout(() => {
+        handleSpin();
+    }, 50);
+    
+    console.log('タッチ終了、スピン実行');
+}
+
+function setupOtherEventListeners() {
+    // 設定ボタン
+    if (elements.settingsBtn) {
+        if (isIOSSafari) {
+            elements.settingsBtn.addEventListener('touchstart', toggleSettings, { passive: true });
+        } else {
+            elements.settingsBtn.addEventListener('click', toggleSettings);
+        }
+    }
+
+    // ミュートボタン
+    if (elements.muteBtn) {
+        if (isIOSSafari) {
+            elements.muteBtn.addEventListener('touchstart', toggleMute, { passive: true });
+        } else {
+            elements.muteBtn.addEventListener('click', toggleMute);
+        }
+    }
+
+    // 音量スライダー
+    if (elements.volumeSlider) {
+        elements.volumeSlider.addEventListener('input', updateVolume);
+    }
+
+    // リセットボタン
+    if (elements.resetBtn) {
+        if (isIOSSafari) {
+            elements.resetBtn.addEventListener('touchstart', resetStatistics, { passive: true });
+        } else {
+            elements.resetBtn.addEventListener('click', resetStatistics);
+        }
+    }
+
+    // ジャックポットポップアップ
+    if (elements.jackpotPopup) {
+        if (isIOSSafari) {
+            elements.jackpotPopup.addEventListener('touchstart', hideJackpotPopup, { passive: true });
+        } else {
+            elements.jackpotPopup.addEventListener('click', hideJackpotPopup);
+        }
+    }
+
+    // 設定パネル外をタップしたら閉じる
+    document.addEventListener(isIOSSafari ? 'touchstart' : 'click', function(e) {
+        if (elements.settingsContent && 
+            !elements.settingsBtn.contains(e.target) && 
+            !elements.settingsContent.contains(e.target)) {
+            hideSettings();
+        }
+    }, { passive: true });
+}
+
+// =================================
+// 音声システム（iOS Safari対応版）
+// =================================
+async function initializeAudioSystem() {
+    console.log('音声システム初期化開始');
+    
+    try {
+        // AudioContextの作成
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('AudioContext作成:', audioContext.state);
+        }
+        
+        // iOS SafariではユーザーインタラクションでAudioContextを再開
+        if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+            console.log('AudioContext再開:', audioContext.state);
+        }
+        
+        // 音声要素の初期化
+        await initializeAudioElements();
+        
+        console.log('音声システム初期化完了');
+        return true;
+        
+    } catch (error) {
+        console.error('音声システム初期化エラー:', error);
+        return false;
+    }
+}
+
+async function initializeAudioElements() {
+    const audioIds = ['jackpot', 'click', 'result-big', 'result-normal', 'spin-start', 'spinning'];
+    
+    for (const id of audioIds) {
+        const element = document.getElementById(`audio-${id}`);
+        if (element) {
+            audioElements[id] = element;
+            element.volume = volume;
+            
+            // iOS Safari用の音声準備
+            try {
+                element.load(); // 音声ファイルを再読み込み
+                
+                // 一瞬だけ無音で再生（初期化）
+                const originalVolume = element.volume;
+                element.volume = 0;
+                element.currentTime = 0;
+                
+                await element.play();
+                element.pause();
+                element.currentTime = 0;
+                element.volume = originalVolume;
+                
+                console.log(`音声初期化成功: ${id}`);
+            } catch (error) {
+                console.warn(`音声初期化警告: ${id}`, error);
+            }
+        }
+    }
+}
+
+// 音声再生（iOS Safari対応版）
+async function playAudio(audioName, delay = 0) {
+    if (isMuted || !audioInitialized) {
+        console.log('音声スキップ:', audioName, { muted: isMuted, initialized: audioInitialized });
         return;
     }
     
     const audio = audioElements[audioName];
     if (!audio) {
-        console.warn('音声要素が見つかりません:', audioName);
+        console.warn('音声要素なし:', audioName);
         return;
     }
     
     try {
+        const playFunction = async () => {
+            // iOS Safari対応の再生処理
+            if (!audio.paused) {
+                audio.pause();
+            }
+            
+            audio.currentTime = 0;
+            audio.volume = volume;
+            
+            // iOS Safariでは Promise を明示的に処理
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                await playPromise;
+            }
+            
+            console.log('音声再生成功:', audioName);
+        };
+        
         if (delay > 0) {
-            setTimeout(async () => {
-                await playAudioInternal(audio, audioName);
-            }, delay);
+            setTimeout(playFunction, delay);
         } else {
-            await playAudioInternal(audio, audioName);
+            await playFunction();
         }
+        
     } catch (error) {
         console.error('音声再生エラー:', audioName, error);
-    }
-}
-
-// 内部音声再生関数
-async function playAudioInternal(audio, audioName) {
-    try {
-        // 既に再生中の場合は停止してリセット
-        if (!audio.paused) {
-            audio.pause();
-        }
         
-        audio.currentTime = 0;
-        audio.volume = volume;
-        
-        await audio.play();
-        console.log('音声再生成功:', audioName);
-        
-    } catch (error) {
-        console.error('音声再生内部エラー:', audioName, error);
-        
-        // フォールバック：Web Audio APIを使用
+        // フォールバック: Web Audio API
         if (audioName === 'click') {
             playBeepSound();
         }
     }
 }
 
-// フォールバック用ビープ音
+// Web Audio API フォールバック
 function playBeepSound() {
     if (isMuted || !audioContext) return;
     
@@ -275,157 +444,75 @@ function playBeepSound() {
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.1);
         
+        console.log('ビープ音再生成功');
+        
     } catch (error) {
-        console.error('ビープ音生成エラー:', error);
+        console.error('ビープ音エラー:', error);
     }
-}
-
-// 音声警告表示
-function showAudioWarning(message, type = 'info') {
-    const existing = document.querySelector('.audio-warning');
-    if (existing) {
-        existing.remove();
-    }
-    
-    const warning = document.createElement('div');
-    warning.className = 'audio-warning';
-    warning.textContent = message;
-    
-    if (type === 'success') {
-        warning.style.background = 'rgba(40, 167, 69, 0.9)';
-        warning.style.color = 'white';
-    } else if (type === 'error') {
-        warning.style.background = 'rgba(220, 53, 69, 0.9)';
-        warning.style.color = 'white';
-    }
-    
-    document.body.appendChild(warning);
-    
-    setTimeout(() => {
-        if (warning.parentNode) {
-            warning.parentNode.removeChild(warning);
-        }
-    }, 3000);
 }
 
 function initializeGame() {
-    // 音量設定を適用
     if (elements.volumeSlider) {
         elements.volumeSlider.value = volume * 100;
     }
     
-    // 音声要素の音量を更新
     Object.values(audioElements).forEach(audio => {
         if (audio) {
             audio.volume = volume;
         }
     });
     
-    // ミュート状態を反映
     updateMuteButton();
+    
+    if (elements.resultMessage && gameInitialized) {
+        elements.resultMessage.textContent = 'SPINボタンをタップ！';
+    }
     
     console.log('ゲーム初期化完了');
 }
 
 // =================================
-// イベントリスナー設定（修正版）
-// =================================
-function setupEventListeners() {
-    // スピンボタン
-    if (elements.spinBtn) {
-        elements.spinBtn.addEventListener('click', handleSpin);
-        elements.spinBtn.addEventListener('touchend', function(e) {
-            e.preventDefault();
-        });
-    }
-
-    // 音声初期化ボタン
-    if (elements.initAudioBtn) {
-        elements.initAudioBtn.addEventListener('click', async () => {
-            await initializeAudio();
-        });
-    }
-
-    // 設定ボタン
-    if (elements.settingsBtn) {
-        elements.settingsBtn.addEventListener('click', toggleSettings);
-    }
-
-    // ミュートボタン
-    if (elements.muteBtn) {
-        elements.muteBtn.addEventListener('click', toggleMute);
-    }
-
-    // 音量スライダー
-    if (elements.volumeSlider) {
-        elements.volumeSlider.addEventListener('input', updateVolume);
-    }
-
-    // リセットボタン
-    if (elements.resetBtn) {
-        elements.resetBtn.addEventListener('click', resetStatistics);
-    }
-
-    // ジャックポットポップアップクリック
-    if (elements.jackpotPopup) {
-        elements.jackpotPopup.addEventListener('click', hideJackpotPopup);
-    }
-
-    // 設定パネル外をクリックしたら閉じる
-    document.addEventListener('click', function(e) {
-        if (elements.settingsContent && 
-            !elements.settingsBtn.contains(e.target) && 
-            !elements.settingsContent.contains(e.target)) {
-            hideSettings();
-        }
-    });
-
-    console.log('イベントリスナー設定完了');
-}
-
-// =================================
-// メインスピン機能（音声対応版）
+// メインスピン機能（iOS Safari対応版）
 // =================================
 function handleSpin() {
-    if (isSpinning) return;
+    if (isSpinning) {
+        console.log('既にスピン中');
+        return;
+    }
+    
+    if (!gameInitialized) {
+        console.log('ゲーム未初期化');
+        return;
+    }
     
     console.log('=== スピン開始 ===');
     
-    // 既存の処理を完全にクリア
     clearAllSpinProcesses();
     
     isSpinning = true;
-    
-    // 最終結果を決定
     finalResult = Math.floor(Math.random() * 6) + 1;
+    
     console.log('確定結果:', finalResult);
     
-    // UI状態をスピン中に変更
     setSpinningState(true);
     
-    // 【修正】音声再生（初期化済みの場合のみ）
+    // 音声再生
     playAudio('click');
     playAudio('spin-start', 200);
     
-    // スピンアニメーション開始
     startSpinAnimation();
     
-    // スピン時間
     const spinDuration = 3000;
-    
-    // プログレスバー開始
     showProgress(spinDuration);
     
     // スピン中音声
-    playAudio('spinning', 500);
+    setTimeout(() => {
+        playAudio('spinning');
+    }, 500);
     
-    // スピン停止処理
     const stopTimeout = setTimeout(() => {
         console.log('=== スピン停止処理開始 ===');
-        
-        // スピン中音声を停止
         stopSpinningSound();
-        
         stopSpinAnimation();
         finalizeSpin(finalResult);
     }, spinDuration);
@@ -433,30 +520,18 @@ function handleSpin() {
     spinTimeouts.push(stopTimeout);
 }
 
-// スピン中音声停止
-function stopSpinningSound() {
-    const spinningAudio = audioElements['spinning'];
-    if (spinningAudio && !spinningAudio.paused) {
-        spinningAudio.pause();
-        spinningAudio.currentTime = 0;
-    }
-}
-
 function clearAllSpinProcesses() {
-    // 既存のインターバルをクリア
     if (spinAnimationInterval) {
         clearInterval(spinAnimationInterval);
         spinAnimationInterval = null;
     }
     
-    // 既存のタイムアウトをすべてクリア
     spinTimeouts.forEach(timeout => clearTimeout(timeout));
     spinTimeouts = [];
     
-    // スピン中音声を停止
     stopSpinningSound();
     
-    console.log('既存処理をクリア');
+    console.log('既存処理クリア完了');
 }
 
 function startSpinAnimation() {
@@ -464,10 +539,8 @@ function startSpinAnimation() {
     
     console.log('スピンアニメーション開始');
     
-    // スピンクラスを追加
     elements.diceFace.classList.add('spinning');
     
-    // 制御されたインターバルでランダム数字表示
     spinAnimationInterval = setInterval(() => {
         if (!isSpinning) {
             clearInterval(spinAnimationInterval);
@@ -491,6 +564,14 @@ function stopSpinAnimation() {
     
     if (elements.diceFace) {
         elements.diceFace.classList.remove('spinning');
+    }
+}
+
+function stopSpinningSound() {
+    const spinningAudio = audioElements['spinning'];
+    if (spinningAudio && !spinningAudio.paused) {
+        spinningAudio.pause();
+        spinningAudio.currentTime = 0;
     }
 }
 
@@ -525,13 +606,14 @@ function displayFinalResult(result) {
         console.log('数字表示更新完了:', elements.diceNumber.textContent);
     }
     
+    // iOS Safariでレンダリングを強制
     if (elements.diceFace && elements.diceNumber) {
         elements.diceFace.offsetHeight;
     }
 }
 
 // =================================
-// 演出・エフェクト（音声対応版）
+// 演出・エフェクト（完全版）
 // =================================
 function showResultEffects(result) {
     console.log('演出開始 - 結果:', result);
@@ -577,7 +659,7 @@ function showResultEffects(result) {
         }
     }, 300);
     
-    // 【修正】結果に応じた音声再生
+    // 音声再生
     if (displayResult === 6) {
         playAudio('jackpot');
     } else if (displayResult >= 4) {
@@ -586,30 +668,26 @@ function showResultEffects(result) {
         playAudio('result-normal');
     }
     
-    // 光るエフェクト
+    // エフェクト
     if (elements.resultGlow) {
         elements.resultGlow.classList.add('active');
     }
     
-    // パーティクル効果
     createParticleEffect(displayResult);
     
-    // フラッシュ効果（高得点時）
     if (displayResult >= 4) {
         createFlashEffect();
     }
     
-    // ジャックポット演出
     if (displayResult === 6) {
         setTimeout(() => {
             showJackpotPopup();
         }, 1000);
     }
     
-    // 統計更新
     updateStatistics();
     
-    // エフェクトのクリーンアップ
+    // クリーンアップ
     setTimeout(() => {
         if (elements.payoutDisplay) {
             elements.payoutDisplay.classList.remove('show');
@@ -619,52 +697,6 @@ function showResultEffects(result) {
         }
     }, 3000);
 }
-
-// =================================
-// 音声・設定制御（修正版）
-// =================================
-function toggleMute() {
-    isMuted = !isMuted;
-    localStorage.setItem('isMuted', isMuted.toString());
-    updateMuteButton();
-    
-    if (!isMuted && audioInitialized) {
-        playAudio('click');
-    }
-}
-
-function updateMuteButton() {
-    if (!elements.muteBtn) return;
-    
-    if (isMuted) {
-        elements.muteBtn.textContent = '🔇 OFF';
-        elements.muteBtn.classList.add('muted');
-    } else {
-        elements.muteBtn.textContent = '🔊 ON';
-        elements.muteBtn.classList.remove('muted');
-    }
-}
-
-function updateVolume() {
-    if (!elements.volumeSlider) return;
-    
-    volume = elements.volumeSlider.value / 100;
-    localStorage.setItem('volume', volume.toString());
-    
-    // 全ての音声要素の音量を更新
-    Object.values(audioElements).forEach(audio => {
-        if (audio) {
-            audio.volume = volume;
-        }
-    });
-    
-    if (!isMuted && audioInitialized) {
-        playAudio('click');
-    }
-}
-
-// 以下、既存の関数は同じため省略...
-// （createParticleEffect, createSingleParticle, createFlashEffect, showJackpotPopup, hideJackpotPopup, setSpinningState, showProgress, toggleSettings, showSettings, hideSettings, addToHistory, updateStatistics, resetStatistics, startBackgroundAnimation, createBackgroundParticle）
 
 function createParticleEffect(result) {
     if (!elements.particlesContainer) return;
@@ -698,9 +730,11 @@ function createSingleParticle(color) {
     particle.style.background = color;
     particle.style.boxShadow = `0 0 8px ${color}`;
     
+    // 画面中央から開始
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     
+    // ランダムな方向に飛散
     const angle = Math.random() * Math.PI * 2;
     const distance = Math.random() * 150 + 100;
     const targetX = centerX + Math.cos(angle) * distance;
@@ -711,6 +745,7 @@ function createSingleParticle(color) {
     
     elements.particlesContainer.appendChild(particle);
     
+    // アニメーション
     let progress = 0;
     const animate = () => {
         progress += 0.02;
@@ -750,6 +785,7 @@ function showJackpotPopup() {
     
     elements.jackpotPopup.classList.add('show');
     
+    // 5秒後に自動で閉じる
     setTimeout(() => {
         hideJackpotPopup();
     }, 5000);
@@ -761,6 +797,9 @@ function hideJackpotPopup() {
     }
 }
 
+// =================================
+// UI制御（完全版）
+// =================================
 function setSpinningState(spinning) {
     if (elements.spinBtn) {
         elements.spinBtn.disabled = spinning;
@@ -806,6 +845,52 @@ function hideSettings() {
     }
 }
 
+// =================================
+// 音声・設定制御（完全版）
+// =================================
+function toggleMute() {
+    isMuted = !isMuted;
+    localStorage.setItem('isMuted', isMuted.toString());
+    updateMuteButton();
+    
+    if (!isMuted && audioInitialized) {
+        playAudio('click');
+    }
+}
+
+function updateMuteButton() {
+    if (!elements.muteBtn) return;
+    
+    if (isMuted) {
+        elements.muteBtn.textContent = '🔇 OFF';
+        elements.muteBtn.classList.add('muted');
+    } else {
+        elements.muteBtn.textContent = '🔊 ON';
+        elements.muteBtn.classList.remove('muted');
+    }
+}
+
+function updateVolume() {
+    if (!elements.volumeSlider) return;
+    
+    volume = elements.volumeSlider.value / 100;
+    localStorage.setItem('volume', volume.toString());
+    
+    // 全ての音声要素の音量を更新
+    Object.values(audioElements).forEach(audio => {
+        if (audio) {
+            audio.volume = volume;
+        }
+    });
+    
+    if (!isMuted && audioInitialized) {
+        playAudio('click');
+    }
+}
+
+// =================================
+// 統計・履歴管理（完全版）
+// =================================
 function addToHistory(result) {
     const entry = {
         result: result,
@@ -815,6 +900,7 @@ function addToHistory(result) {
     spinHistory.push(entry);
     console.log('履歴追加:', entry);
     
+    // 履歴は最新100件まで保持
     if (spinHistory.length > 100) {
         spinHistory = spinHistory.slice(-100);
     }
@@ -823,6 +909,7 @@ function addToHistory(result) {
 }
 
 function updateStatistics() {
+    // 各数字の出現回数をカウント
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
     let jackpots = 0;
     
@@ -833,15 +920,18 @@ function updateStatistics() {
         }
     });
     
+    // 合計回数
     const total = spinHistory.length;
     if (elements.totalSpins) {
         elements.totalSpins.textContent = total;
     }
     
+    // ジャックポット回数
     if (elements.jackpotCount) {
         elements.jackpotCount.textContent = jackpots;
     }
     
+    // 統計グリッド更新
     if (elements.statsGrid) {
         elements.statsGrid.innerHTML = '';
         
@@ -873,7 +963,11 @@ function resetStatistics() {
         if (elements.resultMessage) {
             elements.resultMessage.textContent = 'リセット完了！';
             setTimeout(() => {
-                elements.resultMessage.textContent = 'タップしてスタート！';
+                if (gameInitialized) {
+                    elements.resultMessage.textContent = 'SPINボタンをタップ！';
+                } else {
+                    elements.resultMessage.textContent = 'タップして開始してください';
+                }
             }, 2000);
         }
         
@@ -883,15 +977,20 @@ function resetStatistics() {
     }
 }
 
+// =================================
+// 背景アニメーション（完全版）
+// =================================
 function startBackgroundAnimation() {
     if (!elements.floatingParticles) return;
     
+    // 初期パーティクルを生成
     for (let i = 0; i < 20; i++) {
         setTimeout(() => {
             createBackgroundParticle();
         }, Math.random() * 3000);
     }
     
+    // 定期的に新しいパーティクルを追加
     setInterval(() => {
         createBackgroundParticle();
     }, 2000);
@@ -903,12 +1002,14 @@ function createBackgroundParticle() {
     const particle = document.createElement('div');
     particle.className = 'floating-particle';
     
+    // ランダムな位置と速度
     particle.style.left = Math.random() * 100 + '%';
     particle.style.animationDuration = (Math.random() * 5 + 8) + 's';
     particle.style.animationDelay = Math.random() * 2 + 's';
     
     elements.floatingParticles.appendChild(particle);
     
+    // アニメーション終了後に削除
     setTimeout(() => {
         if (particle.parentNode) {
             particle.parentNode.removeChild(particle);
@@ -916,17 +1017,56 @@ function createBackgroundParticle() {
     }, 15000);
 }
 
-// バイブレーション機能
+// =================================
+// バイブレーション機能（完全版）
+// =================================
 function vibrate(pattern = [50, 50, 50]) {
     if ('vibrate' in navigator && !isMuted) {
         navigator.vibrate(pattern);
     }
 }
 
+// スピンボタンにバイブレーション追加
 if (elements.spinBtn) {
     elements.spinBtn.addEventListener('click', () => {
         vibrate([30, 20, 30]);
     });
 }
 
-console.log('スクリプト読み込み完了');
+// =================================
+// エラーハンドリング・デバッグ（完全版）
+// =================================
+window.addEventListener('error', function(e) {
+    console.error('JavaScript エラー:', e.error);
+    console.error('ファイル:', e.filename);
+    console.error('行:', e.lineno);
+    console.error('列:', e.colno);
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('未処理のPromise拒否:', e.reason);
+});
+
+// パフォーマンス監視
+if ('performance' in window) {
+    window.addEventListener('load', function() {
+        setTimeout(() => {
+            const perfData = performance.getEntriesByType('navigation')[0];
+            console.log('ページ読み込み時間:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
+        }, 1000);
+    });
+}
+
+// メモリ使用量監視（Chrome/Edge）
+if ('memory' in performance) {
+    setInterval(() => {
+        const memory = performance.memory;
+        console.log('メモリ使用量:', {
+            used: Math.round(memory.usedJSHeapSize / 1024 / 1024) + 'MB',
+            total: Math.round(memory.totalJSHeapSize / 1024 / 1024) + 'MB',
+            limit: Math.round(memory.jsHeapSizeLimit / 1024 / 1024) + 'MB'
+        });
+    }, 30000); // 30秒ごと
+}
+
+console.log('iOS Safari対応スクリプト読み込み完了');
