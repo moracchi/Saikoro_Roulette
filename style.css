@@ -103,9 +103,9 @@ body {
 }
 
 /* =================================
-   音声初期化通知（改良版）
+   iOS Safari初期化通知
    ================================= */
-.audio-init-notice {
+.ios-init-notice {
     position: fixed;
     top: 0;
     left: 0;
@@ -116,14 +116,14 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    opacity: 1;
-    visibility: visible;
+    opacity: 0;
+    visibility: hidden;
     transition: all 0.3s ease;
 }
 
-.audio-init-notice.hide {
-    opacity: 0;
-    visibility: hidden;
+.ios-init-notice.show {
+    opacity: 1;
+    visibility: visible;
 }
 
 .notice-content {
@@ -150,29 +150,6 @@ body {
     color: #ccc;
 }
 
-/* ローディングインジケーター */
-.loading-indicator {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(255, 215, 0, 0.3);
-    border-top: 4px solid var(--gold);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 10px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 .init-btn {
     background: linear-gradient(45deg, #FF2D55, #7B68EE);
     color: white;
@@ -191,39 +168,6 @@ body {
 .init-btn:active {
     transform: scale(0.95);
     box-shadow: 0 4px 15px rgba(255, 45, 85, 0.6);
-}
-
-.audio-status {
-    margin-top: 15px;
-    font-size: 0.9em;
-    color: var(--text-silver);
-}
-
-/* 音声状態表示 */
-.audio-health {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 10px;
-    padding: 8px 16px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 20px;
-    font-size: 0.9em;
-}
-
-.health-icon {
-    font-size: 1.2em;
-}
-
-.audio-health.ready {
-    background: rgba(0, 255, 127, 0.2);
-    border: 1px solid var(--green);
-}
-
-.audio-health.error {
-    background: rgba(255, 45, 85, 0.2);
-    border: 1px solid var(--red);
 }
 
 /* =================================
@@ -570,7 +514,6 @@ body {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none !important;
-    background: linear-gradient(45deg, #666, #999);
 }
 
 .spin-btn::before {
@@ -866,7 +809,7 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
-.mute-btn, .audio-test-btn {
+.mute-btn {
     width: 100%;
     background: linear-gradient(45deg, var(--purple), var(--blue));
     color: white;
@@ -878,19 +821,14 @@ body {
     font-weight: 700;
     transition: all 0.3s ease;
     -webkit-tap-highlight-color: transparent;
-    margin-bottom: 8px;
 }
 
-.mute-btn:active, .audio-test-btn:active {
+.mute-btn:active {
     transform: scale(0.95);
 }
 
 .mute-btn.muted {
     background: linear-gradient(45deg, #666, #999);
-}
-
-.audio-test-btn {
-    background: linear-gradient(45deg, var(--green), var(--blue));
 }
 
 /* =================================
@@ -1133,8 +1071,7 @@ button {
     
     .settings-btn:active,
     .reset-btn:active,
-    .mute-btn:active,
-    .audio-test-btn:active {
+    .mute-btn:active {
         transform: scale(0.9);
         transition: transform 0.1s ease;
     }
