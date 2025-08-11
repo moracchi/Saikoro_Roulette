@@ -37,24 +37,48 @@
     </style>
 </head>
 <body>
-    <!-- 音声要素（iOS Safari対応） -->
-    <div style="display: none; position: absolute; top: -9999px;">
-        <audio id="audio-jackpot" preload="metadata" playsinline>
+    <!-- 音声要素（安定化対応） -->
+    <div id="audioContainer" style="display: none; position: absolute; top: -9999px;">
+        <!-- 各音声要素を複数用意して安定性向上 -->
+        <audio id="audio-jackpot-1" preload="auto" playsinline>
             <source src="sounds/jackpot.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-click" preload="metadata" playsinline>
+        <audio id="audio-jackpot-2" preload="auto" playsinline>
+            <source src="sounds/jackpot.mp3" type="audio/mpeg">
+        </audio>
+        
+        <audio id="audio-click-1" preload="auto" playsinline>
             <source src="sounds/click.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-result-big" preload="metadata" playsinline>
+        <audio id="audio-click-2" preload="auto" playsinline>
+            <source src="sounds/click.mp3" type="audio/mpeg">
+        </audio>
+        
+        <audio id="audio-result-big-1" preload="auto" playsinline>
             <source src="sounds/result-big.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-result-normal" preload="metadata" playsinline>
+        <audio id="audio-result-big-2" preload="auto" playsinline>
+            <source src="sounds/result-big.mp3" type="audio/mpeg">
+        </audio>
+        
+        <audio id="audio-result-normal-1" preload="auto" playsinline>
             <source src="sounds/result-normal.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-spin-start" preload="metadata" playsinline>
+        <audio id="audio-result-normal-2" preload="auto" playsinline>
+            <source src="sounds/result-normal.mp3" type="audio/mpeg">
+        </audio>
+        
+        <audio id="audio-spin-start-1" preload="auto" playsinline>
             <source src="sounds/spin-start.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-spinning" preload="metadata" playsinline loop>
+        <audio id="audio-spin-start-2" preload="auto" playsinline>
+            <source src="sounds/spin-start.mp3" type="audio/mpeg">
+        </audio>
+        
+        <audio id="audio-spinning-1" preload="auto" playsinline loop>
+            <source src="sounds/spinning.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="audio-spinning-2" preload="auto" playsinline loop>
             <source src="sounds/spinning.mp3" type="audio/mpeg">
         </audio>
     </div>
@@ -65,12 +89,17 @@
         <div class="neon-grid"></div>
     </div>
 
-    <!-- iOS Safari初期化通知 -->
-    <div class="ios-init-notice" id="iosInitNotice">
+    <!-- 音声初期化通知（改良版） -->
+    <div class="audio-init-notice" id="audioInitNotice">
         <div class="notice-content">
             <h3>🎰 ゲーム初期化</h3>
-            <p>タップして音声を有効化してください</p>
-            <button class="init-btn" id="iosInitBtn">タップして開始</button>
+            <p>音声を有効化してゲームを開始します</p>
+            <div class="loading-indicator" id="loadingIndicator">
+                <div class="spinner"></div>
+                <span>音声ファイル読み込み中...</span>
+            </div>
+            <button class="init-btn" id="audioInitBtn" style="display: none;">タップして開始</button>
+            <div class="audio-status" id="audioStatus"></div>
         </div>
     </div>
 
@@ -82,6 +111,11 @@
                 🎰 サイコロルーレット 🎰
             </h1>
             <p class="subtitle">PREMIUM DICE EXPERIENCE</p>
+            <!-- 音声状態表示 -->
+            <div class="audio-health" id="audioHealth">
+                <span class="health-icon">🔊</span>
+                <span class="health-text">音声: 準備中</span>
+            </div>
         </header>
 
         <!-- ゲームエリア -->
@@ -116,14 +150,14 @@
                 
                 <!-- メッセージエリア -->
                 <div class="message-area">
-                    <div class="result-message" id="resultMessage">タップして開始してください</div>
+                    <div class="result-message" id="resultMessage">音声を初期化してください</div>
                     <div class="payout-display" id="payoutDisplay"></div>
                 </div>
             </div>
 
-            <!-- スピンボタン（iOS対応強化版） -->
+            <!-- スピンボタン -->
             <div class="spin-control">
-                <button class="spin-btn" id="spinBtn" type="button" role="button" aria-label="スピン開始">
+                <button class="spin-btn" id="spinBtn" type="button" role="button" aria-label="スピン開始" disabled>
                     <div class="btn-content">
                         <span class="btn-text">SPIN</span>
                         <span class="btn-icon">🎲</span>
@@ -176,6 +210,9 @@
                 </div>
                 <div class="setting-item">
                     <button class="mute-btn" id="muteBtn" type="button">🔊 ON</button>
+                </div>
+                <div class="setting-item">
+                    <button class="audio-test-btn" id="audioTestBtn" type="button">🎵 音声テスト</button>
                 </div>
             </div>
         </div>
